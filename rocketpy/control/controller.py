@@ -198,9 +198,11 @@ class _Controller:
             "sampling_rate": self.sampling_rate,
             "initial_observed_variables": self.initial_observed_variables,
             "name": self.name,
-            "_interactive_objects_hash": hash(self.interactive_objects)
-            if not isinstance(self.interactive_objects, Iterable)
-            else [hash(obj) for obj in self.interactive_objects],
+            "_interactive_objects_hash": (
+                hash(self.interactive_objects)
+                if not isinstance(self.interactive_objects, Iterable)
+                else [hash(obj) for obj in self.interactive_objects]
+            ),
         }
 
     @classmethod

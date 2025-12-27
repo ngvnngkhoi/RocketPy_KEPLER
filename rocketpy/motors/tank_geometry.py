@@ -349,9 +349,11 @@ class TankGeometry:
     def to_dict(self, **kwargs):
         data = {
             "geometry": {
-                str(domain): function.set_discrete(*domain, 50, mutate_self=False)
-                if kwargs.get("discretize", False)
-                else function
+                str(domain): (
+                    function.set_discrete(*domain, 50, mutate_self=False)
+                    if kwargs.get("discretize", False)
+                    else function
+                )
                 for domain, function in self._geometry.items()
             }
         }
