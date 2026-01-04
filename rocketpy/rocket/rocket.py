@@ -288,6 +288,20 @@ class Rocket:
                 "Invalid coordinate system orientation. Please choose between "
                 + '"tail_to_nose" and "nose_to_tail".'
             )
+            
+        # Kepler specific values 
+        self.total_length = None 
+        self.body_diameter = None
+        self.base_diameter = None
+        self.boattail_length = None
+        self.fin_thickness = None
+        self.fin_michord_length = None
+        self.n_fins = None
+        self.fin_planform_area = None
+        self.fin_exposed_area = None
+        self.body_diameter_fin = None
+        self.nosecone_length = None
+        self.fin_section_ratio = None
 
         # Define rocket inertia attributes in SI units
         self.mass = mass
@@ -383,6 +397,21 @@ class Rocket:
         # Initialize plots and prints object
         self.prints = _RocketPrints(self)
         self.plots = _RocketPlots(self)
+    
+    def define_kepler_values(self):
+        """Define Kepler specific geometric values to Rocket object."""
+        self.total_length = self.plots.draw(get_length = True)
+        self.body_diameter = self.radius * 2
+        self.base_diameter = self.tails[-1]._bottom_radius 
+        self.fin_body_diameter = self.body_diameter + self.base_diameter / 2
+        self.boattail_length = self.tails[-1]._length 
+        self.fin_thickness = self.fins[-1]._thickness 
+        self.fin_michord_length = 0.5 * (self.fins[-1]._root_chord + self.fins[-1]._tip_chord)
+        self.n_fins = self.fins[-1]._n 
+        self.fin_exposed_area = self.fin_michord_length * self.fins[-1]._span
+        self.fin_planform_area = self.fin_exposed_area * (0.5 * self.fin_body_diameter * self.total_length)
+        self.nosecone_length = self.nosecones[-1]._length
+        self.fin_section_ratio = self.fins[-1]._span / self.fin_body_diameter 
 
     @property
     def nosecones(self):

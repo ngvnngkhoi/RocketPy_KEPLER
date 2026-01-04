@@ -105,6 +105,7 @@ class TrapezoidalFins(Fins):
         sweep_angle=None,
         airfoil=None,
         name="Fins",
+        thickness = None, 
     ):
         """Initialize TrapezoidalFins class.
 
@@ -180,6 +181,7 @@ class TrapezoidalFins(Fins):
         self._tip_chord = tip_chord
         self._sweep_length = sweep_length
         self._sweep_angle = sweep_angle
+        self._thickness = thickness
 
         self.evaluate_geometrical_parameters()
         self.evaluate_center_of_pressure()

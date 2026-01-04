@@ -143,7 +143,7 @@ class _RocketPlots:
             lower=0, upper=self.rocket.motor.burn_out_time
         )
 
-    def draw(self, vis_args=None, plane="xz", *, filename=None):
+    def draw(self, vis_args=None, plane="xz", *, filename=None, get_length = False):
         """Draws the rocket in a matplotlib figure.
 
         Parameters
@@ -201,6 +201,10 @@ class _RocketPlots:
 
         drawn_surfaces = self._draw_aerodynamic_surfaces(ax, vis_args, plane)
         last_radius, last_x = self._draw_tubes(ax, drawn_surfaces, vis_args)
+        
+        if get_length:
+            return last_x 
+        
         self._draw_motor(last_radius, last_x, ax, vis_args)
         self._draw_rail_buttons(ax, vis_args)
         self._draw_center_of_mass_and_pressure(ax)
