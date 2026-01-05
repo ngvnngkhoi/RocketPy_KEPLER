@@ -471,7 +471,6 @@ class Flight:
     def __init__(  # pylint: disable=too-many-arguments,too-many-statements
         self,
         rocket,
-        aero,
         environment,
         rail_length,
         inclination=80.0,
@@ -584,7 +583,6 @@ class Flight:
         # Save arguments
         self.env = environment
         self.rocket = rocket
-        self.aero = aero
         self.rail_length = rail_length
         if self.rail_length <= 0:  # pragma: no cover
             raise ValueError("Rail length must be a positive value.")
@@ -774,7 +772,8 @@ class Flight:
                             lambda self, parachute_porosity=parachute.porosity: setattr(
                                 self, "parachute_porosity", parachute_porosity
                             ),
-                            lambda self, added_mass_coefficient=parachute.added_mass_coefficient: setattr(
+                            lambda self,
+                            added_mass_coefficient=parachute.added_mass_coefficient: setattr(
                                 self,
                                 "parachute_added_mass_coefficient",
                                 added_mass_coefficient,
@@ -1021,25 +1020,30 @@ class Flight:
                                             i += 1
                                         # Create flight phase for time after inflation
                                         callbacks = [
-                                            lambda self, parachute_cd_s=parachute.cd_s: setattr(
+                                            lambda self,
+                                            parachute_cd_s=parachute.cd_s: setattr(
                                                 self, "parachute_cd_s", parachute_cd_s
                                             ),
-                                            lambda self, parachute_radius=parachute.radius: setattr(
+                                            lambda self,
+                                            parachute_radius=parachute.radius: setattr(
                                                 self,
                                                 "parachute_radius",
                                                 parachute_radius,
                                             ),
-                                            lambda self, parachute_height=parachute.height: setattr(
+                                            lambda self,
+                                            parachute_height=parachute.height: setattr(
                                                 self,
                                                 "parachute_height",
                                                 parachute_height,
                                             ),
-                                            lambda self, parachute_porosity=parachute.porosity: setattr(
+                                            lambda self,
+                                            parachute_porosity=parachute.porosity: setattr(
                                                 self,
                                                 "parachute_porosity",
                                                 parachute_porosity,
                                             ),
-                                            lambda self, added_mass_coefficient=parachute.added_mass_coefficient: setattr(
+                                            lambda self,
+                                            added_mass_coefficient=parachute.added_mass_coefficient: setattr(
                                                 self,
                                                 "parachute_added_mass_coefficient",
                                                 added_mass_coefficient,
@@ -1343,9 +1347,6 @@ class Flight:
         heading_rad = self.heading * np.pi / 180
 
         return -wind_u * np.cos(heading_rad) + wind_v * np.sin(heading_rad)
-    
-    def re(self, rho, v, l, mu):
-        return (rho * v * l) / mu
 
     def udot_rail1(self, t, u, post_processing=False):
         """Calculates derivative of u state vector with respect to time
@@ -1383,24 +1384,7 @@ class Flight:
             + (vz) ** 2
         ) ** 0.5
         free_stream_mach = free_stream_speed / self.env.speed_of_sound.get_value_opt(z)
-        re_body = self.re(
-            rho=self.env.density.get_value_opt(z),
-            v=free_stream_speed,
-            l=self.rocket.total_length,
-            mu=self.env.dynamic_viscosity.get_value_opt(z)
-        )
-        re_fin = self.re(
-            rho=self.env.density.get_value_opt(z),
-            v=free_stream_speed,
-            l=self.rocket.fin_midchord_length,
-            mu=self.env.dynamic_viscosity.get_value_opt(z)
-        )
-        drag_coeff = self.aero.get_drag_coeff(
-            m=free_stream_mach,
-            re_body=re_body,
-            re_fins=re_fin,
-            aoa=0
-        )
+        drag_coeff = self.rocket.power_on_drag.get_value_opt(free_stream_mach)
 
         # Calculate Forces
         pressure = self.env.pressure.get_value_opt(z)
@@ -1455,9 +1439,7 @@ class Flight:
         # Hey! We will finish this function later, now we just can use u_dot
         return self.u_dot_generalized(t, u, post_processing=post_processing)
 
-    def u_dot(
-        self, t, u, post_processing=False
-    ):  # pylint: disable=too-many-locals,too-many-statements
+    def u_dot(self, t, u, post_processing=False):  # pylint: disable=too-many-locals,too-many-statements
         """Calculates derivative of u state vector with respect to time
         when rocket is flying in 6 DOF motion during ascent out of rail
         and descent without parachute.
@@ -1572,29 +1554,11 @@ class Flight:
 
         # Determine aerodynamics forces
         # Determine Drag Force
-        # if t < self.rocket.motor.burn_out_time:
-        #     drag_coeff = self.rocket.power_on_drag.get_value_opt(free_stream_mach)
-        # else:
-        #     drag_coeff = self.rocket.power_off_drag.get_value_opt(free_stream_mach)
+        if t < self.rocket.motor.burn_out_time:
+            drag_coeff = self.rocket.power_on_drag.get_value_opt(free_stream_mach)
+        else:
+            drag_coeff = self.rocket.power_off_drag.get_value_opt(free_stream_mach)
         rho = self.env.density.get_value_opt(z)
-        re_body = self.re(
-            rho=self.env.density.get_value_opt(z),
-            v=free_stream_speed,
-            l=self.rocket.total_length,
-            mu=self.env.dynamic_viscosity.get_value_opt(z)
-        )
-        re_fin = self.re(
-            rho=self.env.density.get_value_opt(z),
-            v=free_stream_speed,
-            l=self.rocket.fin_midchord_length,
-            mu=self.env.dynamic_viscosity.get_value_opt(z)
-        )
-        drag_coeff = self.aero.get_drag_coeff(
-            m=free_stream_mach,
-            re_body=re_body,
-            re_fins=re_fin,
-            aoa=np.arctan2(vy, vz)
-        )
         R3 = -0.5 * rho * (free_stream_speed**2) * self.rocket.area * drag_coeff
         for air_brakes in self.rocket.air_brakes:
             if air_brakes.deployment_level > 0:
@@ -1795,9 +1759,7 @@ class Flight:
 
         return u_dot
 
-    def u_dot_generalized(
-        self, t, u, post_processing=False
-    ):  # pylint: disable=too-many-locals,too-many-statements
+    def u_dot_generalized(self, t, u, post_processing=False):  # pylint: disable=too-many-locals,too-many-statements
         """Calculates derivative of u state vector with respect to time when the
         rocket is flying in 6 DOF motion in space and significant mass variation
         effects exist. Typical flight phases include powered ascent after launch
@@ -1876,44 +1838,10 @@ class Flight:
                 + self.rocket.motor.pressure_thrust(pressure),
                 0,
             )
-            re_body = self.re(
-                rho=self.env.density.get_value_opt(z),
-                v=free_stream_speed,
-                l=self.rocket.total_length,
-                mu=self.env.dynamic_viscosity.get_value_opt(z)
-            )
-            re_fin = self.re(
-                rho=self.env.density.get_value_opt(z),
-                v=free_stream_speed,
-                l=self.rocket.fin_midchord_length,
-                mu=self.env.dynamic_viscosity.get_value_opt(z)
-            )
-            drag_coeff = self.aero.get_drag_coeff(
-                m=free_stream_mach,
-                re_body=re_body,
-                re_fins=re_fin,
-                aoa=np.arctan2(vy, vz)
-            )
+            drag_coeff = self.rocket.power_on_drag.get_value_opt(free_stream_mach)
         else:
             net_thrust = 0
-            re_body = self.re(
-                rho=self.env.density.get_value_opt(z),
-                v=free_stream_speed,
-                l=self.rocket.total_length,
-                mu=self.env.dynamic_viscosity.get_value_opt(z)
-            )
-            re_fin = self.re(
-                rho=self.env.density.get_value_opt(z),
-                v=free_stream_speed,
-                l=self.rocket.fin_midchord_length,
-                mu=self.env.dynamic_viscosity.get_value_opt(z)
-            )
-            drag_coeff = self.aero.get_drag_coeff(
-                m=free_stream_mach,
-                re_body=re_body,
-                re_fins=re_fin,
-                aoa=np.arctan2(vy, vz)
-            )
+            drag_coeff = self.rocket.power_off_drag.get_value_opt(free_stream_mach)
         R3 += -0.5 * rho * (free_stream_speed**2) * self.rocket.area * drag_coeff
         for air_brakes in self.rocket.air_brakes:
             if air_brakes.deployment_level > 0:
@@ -3643,7 +3571,9 @@ class Flight:
             new_index = (
                 index - 1
                 if flight_phase.t < previous_phase.t
-                else index + 1 if flight_phase.t > next_phase.t else index
+                else index + 1
+                if flight_phase.t > next_phase.t
+                else index
             )
             flight_phase.t += adjust
             self.add(flight_phase, new_index)

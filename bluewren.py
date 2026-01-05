@@ -221,6 +221,7 @@ env2.process_custom_atmosphere(pressure=pressure, temperature=temperature, wind_
 
 wind_flight = Flight(
     rocket=Bluewren,
+    aero = aero,
     environment=env2,
     rail_length=5.1816,
     inclination=90,
