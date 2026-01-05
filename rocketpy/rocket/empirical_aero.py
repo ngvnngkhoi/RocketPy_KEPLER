@@ -11,7 +11,7 @@ class EmpiricalAero:
         self.rocket = rocket
 
     def get_drag_coeff(
-        self, q: float, m: float, re_body: float, re_fins: float, aoa: float
+        self, m: float, re_body: float, re_fins: float, aoa: float
     ):
         l_tr = self.rocket.total_length
         d_b = self.rocket.body_diameter

@@ -1232,6 +1232,7 @@ class Rocket:
         radius=None,
         airfoil=None,
         name="Fins",
+        thickness = 0.005,
     ):
         """Create a trapezoidal fin set, storing its parameters as part of the
         aerodynamic_surfaces list. Its parameters are the axial position along
@@ -1314,6 +1315,7 @@ class Rocket:
             sweep_angle,
             airfoil,
             name,
+            thickness 
         )
 
         # Add fin set to the list of aerodynamic surfaces
