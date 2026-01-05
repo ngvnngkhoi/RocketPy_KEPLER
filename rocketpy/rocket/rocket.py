@@ -295,7 +295,7 @@ class Rocket:
         self.base_diameter = None
         self.boattail_length = None
         self.fin_thickness = None
-        self.fin_michord_length = None
+        self.fin_midchord_length = None
         self.n_fins = None
         self.fin_planform_area = None
         self.fin_exposed_area = None
@@ -403,15 +403,15 @@ class Rocket:
         self.total_length = self.plots.draw(get_length = True)
         self.body_diameter = self.radius * 2
         self.base_diameter = self.tails[-1]._bottom_radius 
-        self.fin_body_diameter = self.body_diameter + self.base_diameter / 2
+        self.body_diameter_fin = self.body_diameter + self.base_diameter / 2
         self.boattail_length = self.tails[-1]._length 
         self.fin_thickness = self.fins[-1]._thickness 
-        self.fin_michord_length = 0.5 * (self.fins[-1]._root_chord + self.fins[-1]._tip_chord)
+        self.fin_midchord_length = 0.5 * (self.fins[-1]._root_chord + self.fins[-1]._tip_chord)
         self.n_fins = self.fins[-1]._n 
-        self.fin_exposed_area = self.fin_michord_length * self.fins[-1]._span
-        self.fin_planform_area = self.fin_exposed_area * (0.5 * self.fin_body_diameter * self.total_length)
+        self.fin_exposed_area = self.fin_midchord_length * self.fins[-1]._span
+        self.fin_planform_area = self.fin_exposed_area * (0.5 * self.body_diameter_fin * self.total_length)
         self.nosecone_length = self.nosecones[-1]._length
-        self.fin_section_ratio = self.fins[-1]._span / self.fin_body_diameter 
+        self.fin_section_ratio = self.fins[-1]._span / self.body_diameter_fin 
 
     @property
     def nosecones(self):

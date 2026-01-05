@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
 import numpy as np
 import math
+import pandas as pd 
+from scipy.interpolate import interp1d
 
 if TYPE_CHECKING:
     from rocket import Rocket
@@ -9,22 +11,27 @@ if TYPE_CHECKING:
 class EmpiricalAero:
     def __init__(self, rocket: "Rocket"):
         self.rocket = rocket
+        self.eps_table = pd.read_csv('rocketpy/rocket/eps_table.csv')
+        self.nu_table = pd.read_csv('rocketpy/rocket/nu_table.csv')
 
     def get_drag_coeff(
-        self, m: float, re_body: float, re_fins: float, aoa: float
+        self, m: float, re_body: float, re_fins: float, aoa: float 
     ):
         l_tr = self.rocket.total_length
         d_b = self.rocket.body_diameter
         d_d = self.rocket.base_diameter
         l_c = self.rocket.boattail_length
         t_f = self.rocket.fin_thickness
-        l_m = self.rocket.fin_michord_length
+        l_m = self.rocket.fin_midchord_length
         n = self.rocket.n_fins
         a_fp = self.rocket.fin_planform_area
         a_fe = self.rocket.fin_exposed_area
         d_f = self.rocket.body_diameter_fin
         l_n = self.rocket.nosecone_length
         r_s = self.rocket.fin_section_ratio
+        
+        f_nu = interp1d(self.nu_table["aoa"], self.nu_table["nu"], kind="linear", fill_value="extrapolate")
+        f_eps = interp1d(self.eps_table["aoa"], self.eps_table["eps"], kind="linear", fill_value="extrapolate")
 
         # skin friciton drag (rocket body)
         re_crit = 5e5
@@ -68,9 +75,9 @@ class EmpiricalAero:
 
         # total cd @ 0 aoa
         cd_0 = cd_fb + c_db + c_df + c_di
-        eps = 0.8
-        nu = 0.6
 
+        eps = f_eps(aoa)
+        nu = f_nu(aoa)
         k_fb = 0.08065 * r_s**2 + 1.153 * r_s
         k_bf = 0.1935 * r_s**2 + 0.8174 * r_s + 1
         c_db_alpha = (
@@ -83,9 +90,13 @@ class EmpiricalAero:
         )
         cd_uncorrected = cd_0 + c_db_alpha + c_df_alpha
 
-        if m < 1:
+        if m < 0.8:
             return cd_uncorrected / np.sqrt(1 - m**2)
         elif 0.8 < m < 1.1:
             return cd_uncorrected / np.sqrt(1 - 0.8**2)
         else:
             return cd_uncorrected / np.sqrt(m**2 - 1)
+
+
+
+    
