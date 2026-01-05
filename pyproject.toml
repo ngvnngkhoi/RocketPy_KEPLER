@@ -21,7 +21,7 @@ classifiers = [
 [project.urls]
 homepage = "https://rocketpy.org/"
 documentation = "https://docs.rocketpy.org/"
-repository = "https://github.com/RocketPy-Team/RocketPy"
+repository = "https://github.com/ngvnngkhoi/RocketPy_KEPLER.git"
 issues = "https://github.com/RocketPy-Team/RocketPy/issues"
 changelog = "https://github.com/RocketPy-Team/RocketPy/blob/master/CHANGELOG.md"
 
